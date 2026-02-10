@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺東縣 SDG 13 & 15 監測儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --sdg13-color: #3f7e44;
+            --sdg15-color: #56c02b;
+            --bg-color: #f8f9fa;
+        }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section-title { width: 100%; padding: 10px 20px; border-radius: 5px; color: white; margin: 20px 0; font-size: 1.5rem; }
+        .sdg13-header { background-color: var(--sdg13-color); }
+        .sdg15-header { background-color: var(--sdg15-color); }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; position: relative; }
+        .card h3 { margin-top: 0; color: #333; font-size: 1.1rem; padding-right: 80px; }
+        
+        /* 詳細資訊按鈕樣式 */
+        .info-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: #eee; border: none; padding: 5px 10px; border-radius: 4px;
+            cursor: pointer; font-size: 0.8rem; transition: 0.3s;
+        }
+        .info-btn:hover { background: #ddd; }
+
+        /* 彈出視窗 (Modal) 樣式 */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white; margin: 15% auto; padding: 25px;
+            border-radius: 10px; width: 50%; max-width: 500px; line-height: 1.6;
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-header { border-bottom: 2px solid var(--sdg13-color); margin-bottom: 15px; padding-bottom: 10px; font-weight: bold; font-size: 1.2rem; }
+        .info-label { font-weight: bold; color: #555; display: block; margin-top: 10px; }
+
+        canvas { width: 100% !important; height: 250px !important; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>臺東縣SDG13&15指標監測儀表板</h1>
+    <p>基於數位孿生與多元空間資訊技術之綠島永續發展計畫</p>
+</div>
+
+<div class="section-title sdg13-header">SDG 13 氣候行動</div>
+<div class="dashboard-grid" id="grid13"></div>
+
+<div class="section-title sdg15-header">SDG 15 陸地生態</div>
+<div class="dashboard-grid" id="grid15"></div>
+
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="modalTitle" class="modal-header"></div>
+        <span class="info-label">主管機關：</span>
+        <div id="modalAgency"></div>
+        <span class="info-label">備註：</span>
+        <div id="modalNote"></div>
+    </div>
+</div>
+
+<script>
+    // 完整的資料結構
+    const indicators = [
+        { id: 'ev', sdg: 13, name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', type: 'line', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%，可洽公路局統計網。' },
+        { id: 'pm10', sdg: 13, name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', type: 'line', agency: '臺東縣環境保護局-空噪科', note: '各年懸浮微粒（PM10）日平均濃度（第98% 高值）。' },
+        { id: 'o3', sdg: 13, name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', type: 'line', agency: '臺東縣環境保護局-空噪科', note: '各年臭氧（O3）小時平均值之第98% 高值。' },
+        { id: 'agri', sdg: 15, name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.21, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', type: 'bar', agency: '臺東縣政府農業處', note: '本縣通過有機驗證及友善審認之農地面積（有機種植面積及友善耕作面積）。' },
+        { id: 'protect', sdg: 15, name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', type: 'bar', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積。' },
+        { id: 'invasive', sdg: 15, name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', type: 'line', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積監測數據。' }
+    ];
+
+    const years = ['109年', '110年', '111年', '112年', '113年', '114年'];
+
+    // 自動生成卡片與圖表
+    indicators.forEach(ind => {
+        const gridId = ind.sdg === 13 ? 'grid13' : 'grid15';
+        const cardHtml = `
+            <div class="card">
+                <h3>${ind.name} (${ind.unit})</h3>
+                <button class="info-btn" onclick="showInfo('${ind.name}', '${ind.agency}', '${ind.note}')">詳細資訊</button>
+                <canvas id="canvas_${ind.id}"></canvas>
+            </div>
+        `;
+        document.getElementById(gridId).innerHTML += cardHtml;
+    });
+
+    // 等待 HTML 渲染後畫圖
+    window.onload = () => {
+        indicators.forEach(ind => {
+            new Chart(document.getElementById(`canvas_${ind.id}`), {
+                type: ind.type,
+                data: {
+                    labels: years,
+                    datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '33', fill: true, tension: 0.3 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        });
+    };
+
+    // Modal 控制
+    function showInfo(title, agency, note) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalAgency').innerText = agency;
+        document.getElementById('modalNote').innerText = note;
+        document.getElementById('infoModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('infoModal').style.display = 'none';
+    }
+
+    // 點擊視窗外部也可關閉
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('infoModal')) closeModal();
+    }
+</script>
+
+</body>
+</html>
