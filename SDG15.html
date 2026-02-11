@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺東縣 SDG 15 監測儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --sdg15-color: #56c02b; --bg-color: #f8f9fa; }
+        html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background-color: var(--bg-color); display: flex; flex-direction: column; font-family: "Microsoft JhengHei", sans-serif; }
+        .header { text-align: center; padding: 10px 0; flex-shrink: 0; }
+        .header h1 { margin: 0; font-size: 1.3rem; }
+        .header p { margin: 2px 0; font-size: 0.85rem; color: #666; }
+        .main-container { flex-grow: 1; display: flex; flex-direction: column; padding: 0 15px 10px 15px; gap: 5px; min-height: 0; }
+        .section-title { padding: 4px 12px; border-radius: 4px; color: white; font-size: 1rem; flex-shrink: 0; background-color: var(--sdg15-color); }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; min-height: 0; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 8px; position: relative; display: flex; flex-direction: column; min-height: 0; }
+        .card h3 { margin: 0 0 5px 0; color: #333; font-size: 1.1rem; padding-right: 50px; }
+        .info-btn { position: absolute; top: 8px; right: 8px; background: #f0f0f0; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; z-index: 10; }
+        .canvas-container { flex: 1; position: relative; min-height: 0; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 10px; width: 40%; line-height: 1.5; }
+        .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <div class="section-title">SDG 15 陸地生態</div>
+    <div class="dashboard-grid" id="grid15"></div>
+</div>
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle" style="margin-top:0; font-size: 1.2rem; border-bottom: 2px solid var(--sdg15-color);"></h2>
+        <strong>主管機關：</strong><div id="modalAgency" style="margin-bottom:10px;"></div>
+        <strong>備註：</strong><div id="modalNote"></div>
+    </div>
+</div>
+<script>
+    const indicators = [
+        { id: 'agri', name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.21, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', type: 'bar', agency: '臺東縣政府農業處', note: '通過有機驗證及友善審認之農地面積。' },
+        { id: 'protect', name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', type: 'bar', agency: '臺東縣政府農業處', note: '濕地、國家公園、自然保護區等累計面積。' },
+        { id: 'invasive', name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', type: 'line', agency: '臺東縣政府農業處', note: '特定外來植物覆蓋面積監測數據。' }
+    ];
+    const years = ['109', '110', '111', '112', '113', '114'];
+    indicators.forEach(ind => {
+        document.getElementById('grid15').innerHTML += `<div class="card"><h3>${ind.name}</h3><button class="info-btn" onclick="showInfo('${ind.name}', '${ind.agency}', '${ind.note}')">詳細資訊</button><div class="canvas-container"><canvas id="canvas_${ind.id}"></canvas></div></div>`;
+    });
+    function renderCharts() {
+        indicators.forEach(ind => {
+            const ctx = document.getElementById(`canvas_${ind.id}`).getContext('2d');
+            new Chart(ctx, {
+                type: ind.type,
+                data: {
+                    labels: years,
+                    datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.type === 'bar' ? ind.color + '88' : ind.color + '33', fill: true, tension: 0.3, pointRadius: 2, barPercentage: 0.9, categoryPercentage: 0.9 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 13, weight: 'bold' } } } } }
+            });
+        });
+    }
+    window.onload = renderCharts;
+    function showInfo(title, agency, note) { document.getElementById('modalTitle').innerText = title; document.getElementById('modalAgency').innerText = agency; document.getElementById('modalNote').innerText = note; document.getElementById('infoModal').style.display = 'block'; }
+    function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+    window.onclick = (e) => { if (e.target == document.getElementById('infoModal')) closeModal(); }
+</script>
+</body>
+</html>
