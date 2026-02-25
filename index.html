@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺東縣 SDG 13 & 15 滿版互動儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <style>
+        :root { --sdg13-color: #3f7e44; --sdg15-color: #56c02b; --bg-color: #ffffff; }
+        
+        html, body { 
+            margin: 0; padding: 0; 
+            background-color: #000; 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            width: 100vw; height: 100vh; 
+            display: flex; overflow: hidden; 
+        }
+
+        /* 左側控制面板 (60%) */
+        .side-panel { 
+            width: 60vw; background: white; display: flex; 
+            flex-direction: column; border-right: 1px solid #ddd; 
+            flex-shrink: 0; height: 100vh; 
+        }
+
+        /* Logo 區域：滿版且留有 0.5cm 間距 */
+        .logo-box { 
+            width: 100%; padding: 0; margin: 0; 
+            border-bottom: 2px solid #eee; flex-shrink: 0; 
+            cursor: zoom-in;
+            margin-bottom: 0.5rem; /* 0.5公分間距 */
+        }
+        .sidebar-logo { width: 100%; height: auto; display: block; }
+
+        /* 內容容器：強迫佔滿剩餘高度以切齊邊界 */
+        .sidebar-content { 
+            flex: 1; display: flex; flex-direction: column; 
+            padding: 0; margin: 0; min-height: 0;
+        }
+
+        .sdg-section-header { 
+            padding: 10px 15px; font-size: 1.1rem; color: white; 
+            font-weight: bold; flex-shrink: 0; margin: 0;
+        }
+        
+        .indicator-grid { 
+            display: grid; grid-template-columns: repeat(3, 1fr); 
+            gap: 0; margin: 0; padding: 0;
+            flex: 1; /* 彈性拉伸 */
+        }
+
+        .card { 
+            background: #fff; padding: 10px; display: flex; 
+            flex-direction: column; position: relative; 
+            box-sizing: border-box;
+            border: 0.5px solid #eee; 
+            min-height: 0;
+        }
+        .card h3 { 
+            margin: 0 0 5px 0; font-size: 0.9rem; color: #333; 
+            padding-right: 65px; line-height: 1.2; height: 2.4em; 
+            overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+        }
+        .canvas-container { flex: 1; position: relative; min-height: 0; }
+        
+        /* 詳細資訊按鈕 */
+        .info-btn { 
+            position: absolute; top: 10px; right: 10px; 
+            background: #f0f0f0; border: none; padding: 3px 8px; 
+            border-radius: 4px; cursor: pointer; font-size: 0.75rem; 
+            z-index: 10;
+        }
+
+        /* 右側地圖與屬性區 (40%) */
+        .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
+        #viewDiv { flex: 2; width: 100%; } 
+        
+        /* 地圖下方固定資訊框 (1/3) */
+        #fixed-feature-info { 
+            flex: 1; display: flex; flex-direction: column; 
+            border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
+        }
+        .info-header { background: #3f7e44; color: white; padding: 12px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
+        
+        /* 左右分一半的容器 */
+        .info-flex-container { display: flex; flex: 1; min-height: 0; }
+        
+        /* 左半邊：文字資訊 */
+        .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
+        /* 右半邊：NPP 折線圖 */
+        .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
+
+        .property-row { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .property-label { font-weight: bold; color: #555; font-size: 0.85rem; }
+        .property-value { color: #000; word-break: break-all; font-size: 0.95rem; }
+        .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 30px; }
+
+        /* 彈窗 */
+        .modal { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 12px; width: 450px; }
+        .close { float: right; font-size: 30px; cursor: pointer; color: #999; line-height: 1; }
+        #imageModal .modal-content { background: transparent; width: auto; height: 90vh; display: flex; justify-content: center; align-items: center; }
+        #expandedImg { max-width: 90%; max-height: 90%; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="side-panel">
+    <div class="logo-box" onclick="openImageModal('SDG13&15logo.png')">
+        <img src="SDG13&15logo.png" alt="SDG Logo" class="sidebar-logo">
+    </div>
+    <div class="sidebar-content">
+        <div class="sdg-section-header" style="background: var(--sdg13-color);">SDG 13 氣候行動</div>
+        <div class="indicator-grid" id="grid-13"></div>
+
+        <div class="sdg-section-header" style="background: var(--sdg15-color);">SDG 15 陸地生態</div>
+        <div class="indicator-grid" id="grid-15"></div>
+    </div>
+</div>
+
+<div class="map-panel">
+    <div id="viewDiv"></div>
+    <div id="fixed-feature-info">
+        <div class="info-header">綠島鄉最小統計區屬性資訊
+        </div>
+        <div class="info-flex-container">
+            <div id="info-content" class="info-body-text">
+                <p class="hint-text">請在地圖上點擊圖徵以查看詳細資料</p>
+            </div>
+            <div class="info-body-chart">
+                <div id="npp-chart-hint" class="hint-text" style="margin-top: 60px;">點擊圖徵以繪製趨勢圖</div>
+                <canvas id="nppChart" style="display:none;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="infoModal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h2 id="modalTitle" style="margin-top:0;"></h2><p><strong>主管機關：</strong><br><span id="modalAgency"></span></p><p><strong>指標備註：</strong><br><span id="modalNote"></span></p></div></div>
+<div id="imageModal" class="modal" onclick="this.style.display='none'"><div class="modal-content"><img id="expandedImg"></div></div>
+
+<script>
+    const years = ['109', '110', '111', '112', '113', '114'];
+    const indicators = [
+        { id: 'ev', sdg: 13, name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%，可洽https://stat.thb.gov.tw/hb01/webMain.aspx?sys=100&funid=11100公路局統計網' },
+        { id: 'pm10', sdg: 13, name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度（第98% 高值）' },
+        { id: 'o3', sdg: 13, name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值' },
+        { id: 'agri', sdg: 15, name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積（有機種植面積為經有機驗證之農糧作物種植面積；友善耕作面積為耕作推廣團體審認之友善耕作面積）' },
+        { id: 'protect', sdg: 15, name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
+        { id: 'invasive', sdg: 15, name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' }
+    ];
+
+    let nppChartInstance = null;
+
+    function init() {
+        indicators.forEach(ind => {
+            const grid = document.getElementById(`grid-${ind.sdg}`);
+            grid.innerHTML += `<div class="card"><h3>${ind.name}</h3><button class="info-btn" onclick="showInfo('${ind.name}', '${ind.agency}', '${ind.note}')">詳細資訊</button><div class="canvas-container"><canvas id="canvas_${ind.id}"></canvas></div></div>`;
+        });
+        renderCharts();
+    }
+
+    function renderCharts() {
+        indicators.forEach(ind => {
+            const ctx = document.getElementById(`canvas_${ind.id}`).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: { labels: years, datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3, pointRadius: 3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: 12 } } }, x: { ticks: { font: { size: 12 } } } } }
+            });
+        });
+    }
+
+    function formatInfoTime(timeStr) {
+        if (!timeStr) return "";
+        const match = timeStr.match(/(\d+)Y(\d+)M/);
+        if (match) return `${parseInt(match[1]) + 1911}年${match[2]}月`;
+        return timeStr;
+    }
+
+    const fieldMapping = {
+        "CODEBASE": "最小統計區代碼", "CODE1": "一級發布區代碼", "CODE2": "二級發布區代碼",
+        "TOWN_ID": "鄉鎮市區代碼", "TOWN": "綠島鄉", "COUNTY_ID": "縣市代碼", "COUNTY": "臺東縣",
+        "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數",
+        "Shape_Area": "區域面積"
+    };
+
+    require(["esri/config", "esri/WebMap", "esri/views/MapView", "esri/Graphic"], function(esriConfig, WebMap, MapView, Graphic) {
+        esriConfig.portalUrl = "https://igistw.maps.arcgis.com";
+        const map = new WebMap({ portalItem: { id: "62fbdab523e945e3a141bf72a89c6d65" } });
+        const view = new MapView({ container: "viewDiv", map: map, popup: { autoOpenEnabled: false } });
+
+        view.when(() => {
+            map.layers.forEach(l => { if (l.type === "feature") l.outFields = ["*"]; });
+        });
+
+        view.on("click", (event) => {
+            const content = document.getElementById('info-content');
+            const nppHint = document.getElementById('npp-chart-hint');
+            const nppCanvas = document.getElementById('nppChart');
+            
+            view.graphics.removeAll();
+            view.hitTest(event).then((response) => {
+                const results = response.results.filter(r => r.graphic && r.graphic.layer);
+                if (results.length > 0) {
+                    const graphic = results[0].graphic;
+                    const attr = graphic.attributes;
+                    view.graphics.add(new Graphic({ geometry: graphic.geometry, symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: "red", width: 2 } } }));
+                    
+                    // 1. 更新左側文字
+                    content.innerHTML = "";
+                    const datePrefix = formatInfoTime(attr["INFO_TIME"]);
+                    Object.keys(fieldMapping).forEach(key => {
+                        if (attr.hasOwnProperty(key)) {
+                            let label = fieldMapping[key];
+                            if (["戶數", "人口數", "男性人", "女性人"].includes(key)) label = `${datePrefix}${label}`;
+                            content.innerHTML += `<div class="property-row"><div class="property-label">${label}</div><div class="property-value">${attr[key] || "無資料"}</div></div>`;
+                        }
+                    });
+
+                    // 2. 更新右側 NPP 圖表
+                    nppHint.style.display = 'none';
+                    nppCanvas.style.display = 'block';
+                    updateNppChart(attr);
+                } else {
+                    content.innerHTML = "<p class='hint-text'>請在地圖上點擊圖徵以查看詳細資料</p>";
+                    nppHint.style.display = 'block';
+                    nppCanvas.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function updateNppChart(attr) {
+        const nppData = [
+            attr.CASA_NPP_2, 
+            attr.CASA_NPP_3, 
+            attr.CASA_NPP_4, 
+            attr.CASA_NPP_5, 
+            attr.CASA_NPP_6
+        ];
+        const ctx = document.getElementById('nppChart').getContext('2d');
+        
+        if (nppChartInstance) nppChartInstance.destroy();
+        
+        nppChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2020', '2021', '2022', '2023', '2024'],
+                datasets: [{
+                    label: '平均 NPP 數值',
+                    data: nppData,
+                    borderColor: '#3f7e44',
+                    backgroundColor: '#3f7e4422',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#3f7e44'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
+                    title: { display: true, text: 'NPP 年度趨勢', font: { size: 14 } }
+                }
+            }
+        });
+    }
+
+    function openImageModal(src) { document.getElementById('expandedImg').src = src; document.getElementById('imageModal').style.display = 'block'; }
+    function showInfo(t, a, n) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalAgency').innerText = a; document.getElementById('modalNote').innerText = n; document.getElementById('infoModal').style.display = 'block'; }
+    function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+    init();
+</script>
+</body>
+</html>
