@@ -25,19 +25,21 @@
             flex-shrink: 0; height: 100vh; 
         }
 
-        /* Logo 區域：滿版且留有 0.5cm 間距 */
+        /* Logo 區域 */
         .logo-box { 
             width: 100%; padding: 0; margin: 0; 
             border-bottom: 2px solid #eee; flex-shrink: 0; 
             cursor: zoom-in;
-            margin-bottom: 0.5rem; /* 0.5公分間距 */
+            margin-bottom: 0.5rem;
         }
         .sidebar-logo { width: 100%; height: auto; display: block; }
 
-        /* 內容容器：強迫佔滿剩餘高度以切齊邊界 */
+        /* 關鍵修正：內容容器啟用捲動，防止文字過長造成遮蔽 */
         .sidebar-content { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 0; margin: 0; min-height: 0;
+            overflow-y: auto; /* 文字過長時可捲動 */
+            overflow-x: hidden;
         }
 
         .sdg-section-header { 
@@ -45,10 +47,11 @@
             font-weight: bold; flex-shrink: 0; margin: 0;
         }
         
+        /* 網格區塊：取消 flex: 1 的強迫平分，改由內容撐開 */
         .indicator-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
             gap: 0; margin: 0; padding: 0;
-            flex: 1; /* 彈性拉伸 */
+            flex-shrink: 0;
         }
 
         .card { 
@@ -56,7 +59,8 @@
             flex-direction: column; position: relative; 
             box-sizing: border-box;
             border: 0.5px solid #eee; 
-            min-height: 0;
+            height: 250px; /* 稍微增加基礎高度確保圖表空間 */
+            min-height: 250px;
         }
         .card h3 { 
             margin: 0 0 5px 0; font-size: 0.9rem; color: #333; 
@@ -74,23 +78,19 @@
             z-index: 10;
         }
 
-        /* 右側地圖與屬性區 (40%) */
+        /* 右側地圖與屬性區 */
         .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
         #viewDiv { flex: 2; width: 100%; } 
         
-        /* 地圖下方固定資訊框 (1/3) */
         #fixed-feature-info { 
             flex: 1; display: flex; flex-direction: column; 
             border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
         }
         .info-header { background: #3f7e44; color: white; padding: 12px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
         
-        /* 左右分一半的容器 */
         .info-flex-container { display: flex; flex: 1; min-height: 0; }
         
-        /* 左半邊：文字資訊 */
         .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
-        /* 右半邊：NPP 折線圖 */
         .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
 
         .property-row { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
@@ -98,7 +98,6 @@
         .property-value { color: #000; word-break: break-all; font-size: 0.95rem; }
         .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 30px; }
 
-        /* 彈窗 */
         .modal { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
         .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 12px; width: 450px; }
         .close { float: right; font-size: 30px; cursor: pointer; color: #999; line-height: 1; }
@@ -124,8 +123,7 @@
 <div class="map-panel">
     <div id="viewDiv"></div>
     <div id="fixed-feature-info">
-        <div class="info-header">綠島鄉最小統計區屬性資訊
-        </div>
+        <div class="info-header">綠島鄉最小統計區屬性資訊</div>
         <div class="info-flex-container">
             <div id="info-content" class="info-body-text">
                 <p class="hint-text">請在地圖上點擊圖徵以查看詳細資料</p>
@@ -209,7 +207,6 @@
                     const attr = graphic.attributes;
                     view.graphics.add(new Graphic({ geometry: graphic.geometry, symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: "red", width: 2 } } }));
                     
-                    // 1. 更新左側文字
                     content.innerHTML = "";
                     const datePrefix = formatInfoTime(attr["INFO_TIME"]);
                     Object.keys(fieldMapping).forEach(key => {
@@ -220,7 +217,6 @@
                         }
                     });
 
-                    // 2. 更新右側 NPP 圖表
                     nppHint.style.display = 'none';
                     nppCanvas.style.display = 'block';
                     updateNppChart(attr);
@@ -234,40 +230,16 @@
     });
 
     function updateNppChart(attr) {
-        const nppData = [
-            attr.CASA_NPP_2, 
-            attr.CASA_NPP_3, 
-            attr.CASA_NPP_4, 
-            attr.CASA_NPP_5, 
-            attr.CASA_NPP_6
-        ];
+        const nppData = [attr.CASA_NPP_2, attr.CASA_NPP_3, attr.CASA_NPP_4, attr.CASA_NPP_5, attr.CASA_NPP_6];
         const ctx = document.getElementById('nppChart').getContext('2d');
-        
         if (nppChartInstance) nppChartInstance.destroy();
-        
         nppChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['2020', '2021', '2022', '2023', '2024'],
-                datasets: [{
-                    label: '平均 NPP 數值',
-                    data: nppData,
-                    borderColor: '#3f7e44',
-                    backgroundColor: '#3f7e4422',
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#3f7e44'
-                }]
+                datasets: [{ label: '平均 NPP 數值', data: nppData, borderColor: '#3f7e44', backgroundColor: '#3f7e4422', fill: true, tension: 0.3, pointRadius: 5 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
-                    title: { display: true, text: 'NPP 年度趨勢', font: { size: 14 } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top' }, title: { display: true, text: 'NPP 年度趨勢' } } }
         });
     }
 
