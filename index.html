@@ -25,39 +25,44 @@
             display: flex; overflow: hidden; 
         }
 
-        /* 左側控制面板 */
+        /* 左側控制面板 (60%) */
         .side-panel { 
             width: 60vw; background: white; display: flex; 
             flex-direction: column; border-right: 1px solid #ddd; 
-            flex-shrink: 0; height: 100vh; 
+            flex-shrink: 0; height: 100vh; margin: 0; padding: 0;
         }
 
-        /* Logo 欄位滿版 */
+        /* Logo 欄位：滿版且移除外邊距 */
         .logo-box { 
             width: 100%; padding: 0; margin: 0; 
             border-bottom: 2px solid #eee; flex-shrink: 0; 
             cursor: zoom-in;
-            margin-bottom: 0.5rem; /* 維持 0.5cm 間距 */
         }
         .sidebar-logo { width: 100%; height: auto; display: block; }
 
-        /* 關鍵修正：內容區塊佔滿 100% 剩餘高度 */
+        /* 內容容器：強迫佔滿剩餘高度 */
         .sidebar-content { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 0; margin: 0; min-height: 0;
-            overflow: hidden; /* 關閉滾動，強迫切齊 */
+            overflow: hidden; /* 強迫不捲動，直接切齊 */
         }
 
+        /* 分類標題：固定高度 */
         .sdg-section-header { 
-            padding: 10px 15px; font-size: var(--section-header-size); 
-            color: white; font-weight: bold; flex-shrink: 0; margin: 0;
+            height: 40px; line-height: 40px; padding: 0 15px; 
+            font-size: var(--section-header-size); 
+            color: white; font-weight: bold; flex-shrink: 0; 
+            margin-top: 0.5rem; /* Logo與標題間的 0.5cm 間距 */
         }
+        /* 第二個標題不需要間距 */
+        #header-15 { margin-top: 0; }
         
-        /* 網格區塊：分配剩餘高度以切齊底部 */
+        /* 指標網格：核心修正 - 使用 calc 確保填滿 */
         .indicator-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
             gap: 0; margin: 0; padding: 0;
-            flex: 1; /* 關鍵：讓網格像彈簧一樣伸展填滿空間 */
+            height: calc((100% - 80px - 0.5rem) / 2); /* 扣除兩個 header 高度與一個間距 */
+            flex-shrink: 0;
         }
 
         .card { 
@@ -65,7 +70,7 @@
             flex-direction: column; position: relative; 
             box-sizing: border-box;
             border: 0.5px solid #eee; 
-            min-height: 0; /* 允許卡片縮放以適應螢幕 */
+            min-height: 0; height: 100%;
         }
         .card h3 { 
             margin: 0 0 5px 0; font-size: var(--card-title-size); 
@@ -75,7 +80,7 @@
         }
         .canvas-container { flex: 1; position: relative; min-height: 0; }
         
-        /* 確認按鈕文字：詳細資訊 */
+        /* 詳細資訊按鈕 (固定文字) */
         .info-btn { 
             position: absolute; top: 10px; right: 10px; 
             background: #f0f0f0; border: none; padding: 3px 8px; 
@@ -92,7 +97,7 @@
             flex: 1; display: flex; flex-direction: column; 
             border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
         }
-        .info-header { background: #3f7e44; color: white; padding: 12px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
+        .info-header { background: #3f7e44; color: white; padding: 15px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
         .info-flex-container { display: flex; flex: 1; min-height: 0; }
         .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
         .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
@@ -103,7 +108,7 @@
         .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 50px; }
 
         .modal { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 12px; width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 12px; width: 450px; }
         .close { float: right; font-size: 30px; cursor: pointer; color: #999; line-height: 1; }
         #imageModal .modal-content { background: transparent; width: auto; height: 90vh; display: flex; justify-content: center; align-items: center; }
         #expandedImg { max-width: 90%; max-height: 90%; border-radius: 8px; }
@@ -119,7 +124,7 @@
         <div class="sdg-section-header" style="background: var(--sdg13-color);">SDG 13 氣候行動</div>
         <div class="indicator-grid" id="grid-13"></div>
 
-        <div class="sdg-section-header" style="background: var(--sdg15-color);">SDG 15 陸地生態</div>
+        <div class="sdg-section-header" id="header-15" style="background: var(--sdg15-color);">SDG 15 陸地生態</div>
         <div class="indicator-grid" id="grid-15"></div>
     </div>
 </div>
@@ -171,11 +176,7 @@
             new Chart(ctx, {
                 type: 'line',
                 data: { labels: years, datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3, pointRadius: 3 }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } } 
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } } }
             });
         });
     }
@@ -191,7 +192,8 @@
         "CODEBASE": "最小統計區代碼", "CODE1": "一級發布區代碼", "CODE2": "二級發布區代碼",
         "TOWN_ID": "鄉鎮市區代碼", "TOWN": "綠島鄉", "COUNTY_ID": "縣市代碼", "COUNTY": "臺東縣",
         "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數",
-        "Shape_Area": "區域面積"
+        "CASA_NPP_2": "2020年平均NPP", "CASA_NPP_3": "2021年平均NPP", "CASA_NPP_4": "2022年平均NPP",
+        "CASA_NPP_5": "2023年平均NPP", "CASA_NPP_6": "2024年平均NPP", "Shape_Area": "區域面積"
     };
 
     require(["esri/config", "esri/WebMap", "esri/views/MapView", "esri/Graphic"], function(esriConfig, WebMap, MapView, Graphic) {
