@@ -12,9 +12,8 @@
             --sdg13-color: #3f7e44; 
             --sdg15-color: #56c02b; 
             --bg-color: #ffffff; 
-            /* 在這裡統一調整字體大小，方便管理 */
-            --card-title-size: 1.1rem; 
-            --section-header-size: 1.2rem;
+            --card-title-size: 1rem; 
+            --section-header-size: 1.1rem;
             --axis-font-size: 12; 
         }
         
@@ -26,38 +25,39 @@
             display: flex; overflow: hidden; 
         }
 
-        /* 左側面板 (60%) */
+        /* 左側控制面板 */
         .side-panel { 
             width: 60vw; background: white; display: flex; 
             flex-direction: column; border-right: 1px solid #ddd; 
             flex-shrink: 0; height: 100vh; 
         }
 
+        /* Logo 欄位滿版 */
         .logo-box { 
             width: 100%; padding: 0; margin: 0; 
             border-bottom: 2px solid #eee; flex-shrink: 0; 
             cursor: zoom-in;
-            margin-bottom: 0.5rem; /* 0.5公分間距 */
+            margin-bottom: 0.5rem; /* 維持 0.5cm 間距 */
         }
         .sidebar-logo { width: 100%; height: auto; display: block; }
 
+        /* 關鍵修正：內容區塊佔滿 100% 剩餘高度 */
         .sidebar-content { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 0; margin: 0; min-height: 0;
-            overflow-y: auto; /* 預防文字過長造成溢出 */
+            overflow: hidden; /* 關閉滾動，強迫切齊 */
         }
 
         .sdg-section-header { 
-            padding: 10px 15px; 
-            font-size: var(--section-header-size); 
-            color: white; 
-            font-weight: bold; flex-shrink: 0; margin: 0;
+            padding: 10px 15px; font-size: var(--section-header-size); 
+            color: white; font-weight: bold; flex-shrink: 0; margin: 0;
         }
         
+        /* 網格區塊：分配剩餘高度以切齊底部 */
         .indicator-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
             gap: 0; margin: 0; padding: 0;
-            flex-shrink: 0; /* 確保不被壓縮 */
+            flex: 1; /* 關鍵：讓網格像彈簧一樣伸展填滿空間 */
         }
 
         .card { 
@@ -65,18 +65,17 @@
             flex-direction: column; position: relative; 
             box-sizing: border-box;
             border: 0.5px solid #eee; 
-            height: 250px; /* 固定高度防止格式跑掉 */
+            min-height: 0; /* 允許卡片縮放以適應螢幕 */
         }
         .card h3 { 
-            margin: 0 0 5px 0; 
-            font-size: var(--card-title-size); 
-            color: #333; 
-            padding-right: 65px; line-height: 1.2; height: 2.4em; 
+            margin: 0 0 5px 0; font-size: var(--card-title-size); 
+            color: #333; padding-right: 65px; line-height: 1.2; height: 2.4em; 
             overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; 
             -webkit-box-orient: vertical; 
         }
         .canvas-container { flex: 1; position: relative; min-height: 0; }
         
+        /* 確認按鈕文字：詳細資訊 */
         .info-btn { 
             position: absolute; top: 10px; right: 10px; 
             background: #f0f0f0; border: none; padding: 3px 8px; 
@@ -88,6 +87,7 @@
         .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
         #viewDiv { flex: 2; width: 100%; } 
         
+        /* 固定比例 2/3 與 1/3 */
         #fixed-feature-info { 
             flex: 1; display: flex; flex-direction: column; 
             border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
@@ -165,22 +165,16 @@
     }
 
     function renderCharts() {
-        // 從 CSS 變數讀取字體大小
-        const fontSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
-        
+        const axisSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
         indicators.forEach(ind => {
             const ctx = document.getElementById(`canvas_${ind.id}`).getContext('2d');
             new Chart(ctx, {
                 type: 'line',
                 data: { labels: years, datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3, pointRadius: 3 }] },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    responsive: true, maintainAspectRatio: false, 
                     plugins: { legend: { display: false } }, 
-                    scales: { 
-                        y: { ticks: { font: { size: fontSize } } }, 
-                        x: { ticks: { font: { size: fontSize } } } 
-                    } 
+                    scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } } 
                 }
             });
         });
@@ -213,7 +207,6 @@
             const content = document.getElementById('info-content');
             const nppHint = document.getElementById('npp-chart-hint');
             const nppCanvas = document.getElementById('nppChart');
-            
             view.graphics.removeAll();
             view.hitTest(event).then((response) => {
                 const results = response.results.filter(r => r.graphic && r.graphic.layer);
@@ -221,7 +214,6 @@
                     const graphic = results[0].graphic;
                     const attr = graphic.attributes;
                     view.graphics.add(new Graphic({ geometry: graphic.geometry, symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: "red", width: 2 } } }));
-                    
                     content.innerHTML = "";
                     const datePrefix = formatInfoTime(attr["INFO_TIME"]);
                     Object.keys(fieldMapping).forEach(key => {
@@ -231,7 +223,6 @@
                             content.innerHTML += `<div class="property-row"><div class="property-label">${label}</div><div class="property-value">${attr[key] || "無資料"}</div></div>`;
                         }
                     });
-
                     nppHint.style.display = 'none';
                     nppCanvas.style.display = 'block';
                     updateNppChart(attr);
@@ -247,8 +238,7 @@
     function updateNppChart(attr) {
         const nppData = [attr.CASA_NPP_2, attr.CASA_NPP_3, attr.CASA_NPP_4, attr.CASA_NPP_5, attr.CASA_NPP_6];
         const ctx = document.getElementById('nppChart').getContext('2d');
-        const fontSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
-
+        const axisSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
         if (nppChartInstance) nppChartInstance.destroy();
         nppChartInstance = new Chart(ctx, {
             type: 'line',
@@ -258,11 +248,8 @@
             },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: true, position: 'top' }, title: { display: true, text: 'NPP 年度趨勢' } },
-                scales: { 
-                    y: { ticks: { font: { size: fontSize } } }, 
-                    x: { ticks: { font: { size: fontSize } } } 
-                }
+                plugins: { legend: { display: true, position: 'top' }, title: { display: true, text: 'NPP 年度趨勢', font: { size: 14 } } },
+                scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } }
             }
         });
     }
