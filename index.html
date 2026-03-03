@@ -25,14 +25,12 @@
             display: flex; overflow: hidden; 
         }
 
-        /* 左側控制面板 (60%) */
         .side-panel { 
             width: 60vw; background: white; display: flex; 
             flex-direction: column; border-right: 1px solid #ddd; 
             flex-shrink: 0; height: 100vh; margin: 0; padding: 0;
         }
 
-        /* Logo 欄位：滿版且移除外邊距 */
         .logo-box { 
             width: 100%; padding: 0; margin: 0; 
             border-bottom: 2px solid #eee; flex-shrink: 0; 
@@ -40,28 +38,24 @@
         }
         .sidebar-logo { width: 100%; height: auto; display: block; }
 
-        /* 內容容器：強迫佔滿剩餘高度 */
         .sidebar-content { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 0; margin: 0; min-height: 0;
-            overflow: hidden; /* 強迫不捲動，直接切齊 */
+            overflow: hidden;
         }
 
-        /* 分類標題：固定高度 */
         .sdg-section-header { 
             height: 40px; line-height: 40px; padding: 0 15px; 
             font-size: var(--section-header-size); 
             color: white; font-weight: bold; flex-shrink: 0; 
-            margin-top: 0.5rem; /* Logo與標題間的 0.5cm 間距 */
+            margin-top: 0.5rem;
         }
-        /* 第二個標題不需要間距 */
         #header-15 { margin-top: 0; }
         
-        /* 指標網格：核心修正 - 使用 calc 確保填滿 */
         .indicator-grid { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
             gap: 0; margin: 0; padding: 0;
-            height: calc((100% - 80px - 0.5rem) / 2); /* 扣除兩個 header 高度與一個間距 */
+            height: calc((100% - 80px - 0.5rem) / 2); 
             flex-shrink: 0;
         }
 
@@ -80,7 +74,6 @@
         }
         .canvas-container { flex: 1; position: relative; min-height: 0; }
         
-        /* 詳細資訊按鈕 (固定文字) */
         .info-btn { 
             position: absolute; top: 10px; right: 10px; 
             background: #f0f0f0; border: none; padding: 3px 8px; 
@@ -88,16 +81,14 @@
             z-index: 10;
         }
 
-        /* 右側地圖區 (40%) */
         .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
         #viewDiv { flex: 2; width: 100%; } 
         
-        /* 固定比例 2/3 與 1/3 */
         #fixed-feature-info { 
             flex: 1; display: flex; flex-direction: column; 
             border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
         }
-        .info-header { background: #3f7e44; color: white; padding: 15px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
+        .info-header { background: #3f7e44; color: white; padding: 12px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
         .info-flex-container { display: flex; flex: 1; min-height: 0; }
         .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
         .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
@@ -121,10 +112,10 @@
         <img src="SDG13&15logo.png" alt="SDG Logo" class="sidebar-logo">
     </div>
     <div class="sidebar-content">
-        <div class="sdg-section-header" style="background: var(--sdg13-color);">SDG 13 氣候行動</div>
+        <div class="sdg-section-header" style="background: var(--sdg13-color);">臺東縣 SDG 13 氣候行動</div>
         <div class="indicator-grid" id="grid-13"></div>
 
-        <div class="sdg-section-header" id="header-15" style="background: var(--sdg15-color);">SDG 15 陸地生態</div>
+        <div class="sdg-section-header" id="header-15" style="background: var(--sdg15-color);">臺東縣 SDG 15 陸地生態</div>
         <div class="indicator-grid" id="grid-15"></div>
     </div>
 </div>
@@ -152,8 +143,8 @@
     const years = ['109', '110', '111', '112', '113', '114'];
     const indicators = [
         { id: 'ev', sdg: 13, name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%，可洽https://stat.thb.gov.tw/hb01/webMain.aspx?sys=100&funid=11100公路局統計網' },
-        { id: 'pm10', sdg: 13, name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度（第98% 高值）' },
-        { id: 'o3', sdg: 13, name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值' },
+        { id: 'pm10', sdg: 13, name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度（第98% 高值），指標分類依環境部公告空氣品質指標作為依據。' },
+        { id: 'o3', sdg: 13, name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值，指標分類依環境部公告空氣品質指標作為依據。' },
         { id: 'agri', sdg: 15, name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積（有機種植面積為經有機驗證之農糧作物種植面積；友善耕作面積為耕作推廣團體審認之友善耕作面積）' },
         { id: 'protect', sdg: 15, name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
         { id: 'invasive', sdg: 15, name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' }
@@ -173,10 +164,71 @@
         const axisSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
         indicators.forEach(ind => {
             const ctx = document.getElementById(`canvas_${ind.id}`).getContext('2d');
+            
+            // 動態顏色判斷邏輯
+            let pointColors = [];
+
+            if (ind.id === 'pm10') {
+                pointColors = ind.data.map(v => v >= 50 ? '#f1c40f' : '#2ecc71');
+            } else if (ind.id === 'o3') {
+                // 單位轉換門檻：0.054ppm = 54ppb. > 54 為黃色，其餘綠色
+                pointColors = ind.data.map(v => v > 54 ? '#f1c40f' : '#2ecc71');
+            } else {
+                pointColors = ind.color;
+            }
+
+            // Y 軸特定設定
+            let yScaleConfig = { 
+                ticks: { font: { size: axisSize } }
+            };
+
+            // 如果是 O3，縮小範圍至 50~75 以凸顯波動，並在 55 劃綠色基準線
+            if (ind.id === 'o3') {
+                yScaleConfig.min = 50; 
+                yScaleConfig.max = 75;
+                yScaleConfig.grid = {
+                    color: context => context.tick.value === 55 ? 'rgba(46, 204, 113, 1)' : 'rgba(0,0,0,0.1)',
+                    lineWidth: context => context.tick.value === 55 ? 2 : 1
+                };
+            } else if (ind.id === 'pm10') {
+                yScaleConfig.grid = {
+                    color: context => context.tick.value === 50 ? 'rgba(241, 196, 15, 0.8)' : 'rgba(0,0,0,0.1)',
+                    lineWidth: context => context.tick.value === 50 ? 2 : 1
+                };
+            }
+
             new Chart(ctx, {
                 type: 'line',
-                data: { labels: years, datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3, pointRadius: 3 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } } }
+                data: { 
+                    labels: years, 
+                    datasets: [{ 
+                        label: ind.unit, 
+                        data: ind.data, 
+                        borderColor: ind.color, 
+                        backgroundColor: ind.color + '15', 
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        fill: true, 
+                        tension: 0.3,
+                        segment: {
+                            borderColor: ctx => {
+                                if (ind.id === 'pm10') return ctx.p1.parsed.y >= 50 ? '#f1c40f' : '#2ecc71';
+                                if (ind.id === 'o3') return ctx.p1.parsed.y > 54 ? '#f1c40f' : '#2ecc71';
+                                return ind.color;
+                            }
+                        }
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: yScaleConfig, 
+                        x: { ticks: { font: { size: axisSize } } } 
+                    } 
+                }
             });
         });
     }
@@ -192,8 +244,7 @@
         "CODEBASE": "最小統計區代碼", "CODE1": "一級發布區代碼", "CODE2": "二級發布區代碼",
         "TOWN_ID": "鄉鎮市區代碼", "TOWN": "綠島鄉", "COUNTY_ID": "縣市代碼", "COUNTY": "臺東縣",
         "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數",
-        "CASA_NPP_2": "2020年平均NPP", "CASA_NPP_3": "2021年平均NPP", "CASA_NPP_4": "2022年平均NPP",
-        "CASA_NPP_5": "2023年平均NPP", "CASA_NPP_6": "2024年平均NPP", "Shape_Area": "區域面積"
+        "Shape_Area": "區域面積"
     };
 
     require(["esri/config", "esri/WebMap", "esri/views/MapView", "esri/Graphic"], function(esriConfig, WebMap, MapView, Graphic) {
