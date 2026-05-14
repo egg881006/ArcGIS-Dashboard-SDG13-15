@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺東縣 SDG 13 & 15 滿版互動儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <style>
+        :root { 
+            --sdg13-color: #3f7e44; 
+            --sdg15-color: #56c02b; 
+            --climate-color: #2c3e50;
+            --bg-color: #ffffff; 
+            --card-title-size: 0.9rem; 
+            --axis-font-size: 12; 
+            --up-color: #28a745;
+            --down-color: #dc3545;
+        }
+        
+        html, body { 
+            margin: 0; padding: 0; 
+            background-color: #000; 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            width: 100vw; height: 100vh; 
+            display: flex; overflow: hidden; 
+        }
+
+        .side-panel { 
+            width: 60vw; background: #fff; display: flex; 
+            border-right: 1px solid #ddd; flex-shrink: 0; height: 100vh; 
+        }
+
+        /* 左側年份與 Logo 欄位調整 */
+        .year-sidebar {
+            width: 220px; background: #fff; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #eee;
+        }
+        
+        /* Logo 圖片大小統一設定 */
+        .sidebar-logo-container { width: 100%; display: flex; flex-direction: column; padding: 0; }
+        .sidebar-logo-img { width: 100%; height: auto; cursor: pointer; display: block; transition: opacity 0.3s; }
+        .sidebar-logo-img:hover { opacity: 0.8; }
+        
+        /* 標題與綠色線條統一設定 */
+        .sidebar-text { 
+            padding: 15px;
+            color: #333; font-size: 1.1rem; text-align: center; font-weight: bold; 
+            border-bottom: 2px solid var(--sdg13-color);
+            margin: 0 15px 20px 15px;
+        }
+        
+        /* 年份按鈕字體、字形與外觀統一設定 */
+        #year-btn-container { padding: 0 15px; display: flex; flex-direction: column; }
+        .year-btn {
+            width: 100%; 
+            padding: 12px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            text-align: center; 
+            font-size: 1rem; 
+            margin-bottom: 8px; 
+            border-radius: 6px; 
+            background: #f8f9fa; 
+            color: #555; 
+            border: 1px solid #eee;
+            font-family: "Microsoft JhengHei", sans-serif;
+            box-sizing: border-box;
+        }
+        .year-btn:hover { background: #e9ecef; }
+        .year-btn.active { 
+            background: var(--sdg13-color); 
+            color: white; 
+            font-weight: bold; 
+            border-color: var(--sdg13-color); 
+        }
+
+        .main-indicators { flex: 1; display: flex; flex-direction: column; height: 100vh; }
+        
+        .indicator-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(3, 1fr); /* 從 4 調整為 3，讓剩餘 9 個指標垂直填滿 */
+            gap: 2px; padding: 2px;
+            height: 100%; width: 100%;
+            box-sizing: border-box; background: #eee; 
+        }
+
+        .stat-card {
+            background: #fff; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center;
+            cursor: pointer; position: relative; transition: background 0.2s;
+            overflow: hidden; border-left: 6px solid #ccc; 
+        }
+        .stat-card.sdg13 { border-left-color: var(--sdg13-color); }
+        .stat-card.sdg15 { border-left-color: var(--sdg15-color); }
+        .stat-card.climate { border-left-color: var(--climate-color); }
+
+        .stat-card h3 { margin: 0; font-size: var(--card-title-size); color: #666; text-align: center; width: 90%; }
+        
+        .value-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 5px 0; }
+        .stat-value { font-size: 2.2rem; font-weight: bold; color: #222; }
+        .stat-unit { font-size: 0.8rem; color: #999; }
+
+        .trend-arrow { width: 1cm; height: 0.5cm; display: none; }
+
+        .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
+        #viewDiv { flex: 2; width: 100%; } 
+        #fixed-feature-info { flex: 1; display: flex; flex-direction: column; border-top: 2px solid #ccc; background: #fff; overflow: hidden; }
+        .info-header { background: #3f7e44; color: white; padding: 12px; text-align: center; flex-shrink: 0; }
+        .info-flex-container { display: flex; flex: 1; min-height: 0; }
+        .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
+        .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
+
+        .property-row { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+        .property-label { font-weight: bold; color: #555; font-size: 0.8rem; }
+        .property-value { color: #000; word-break: break-all; font-size: 0.9rem; }
+        .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 30px; }
+
+        .modal { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+        .modal-content { background: white; margin: 5vh auto; padding: 25px; border-radius: 12px; width: 800px; max-width: 90%; position: relative; }
+        .close { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #999; }
+        #chartModal .canvas-container { height: 420px; width: 100%; margin-top: 10px; }
+        #modalDescription { font-size: 0.85rem; color: #444; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="side-panel">
+    <div class="year-sidebar">
+        <div class="sidebar-logo-container">
+            <a href="https://globalgoals.tw/13-climate-action" target="_blank"><img src="SDG13logo.png" alt="SDG13" class="sidebar-logo-img"></a>
+            <a href="https://globalgoals.tw/15-life-on-land" target="_blank"><img src="SDG15logo.png" alt="SDG15" class="sidebar-logo-img"></a>
+        </div>
+        <div class="sidebar-text">請選擇年份</div>
+        <div id="year-btn-container"></div>
+    </div>
+
+    <div class="main-indicators">
+        <div class="indicator-grid" id="master-grid"></div>
+    </div>
+</div>
+
+<div class="map-panel">
+    <div id="viewDiv"></div>
+    <div id="fixed-feature-info">
+        <div class="info-header">綠島鄉最小統計區屬性資訊</div>
+        <div class="info-flex-container">
+            <div id="info-content" class="info-body-text">
+                <p class="hint-text">請在地圖上點擊圖徵以查看詳細資料</p>
+            </div>
+            <div class="info-body-chart">
+                <div id="npp-chart-hint" class="hint-text" style="margin-top: 60px;">點擊圖徵以繪製趨勢圖</div>
+                <canvas id="nppChart" style="display:none;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chartModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeChartModal()">&times;</span>
+        <h2 id="chartModalTitle" style="margin-top:0; font-size: 1.2rem; color: #333;"></h2>
+        <div id="modalDescription"></div>
+        <div class="canvas-container"><canvas id="modalCanvas"></canvas></div>
+    </div>
+</div>
+
+<script>
+    const years = ['109', '110', '111', '112', '113', '114'];
+    let currentYearIdx = 5;
+
+    const allIndicators = [
+        { id: 'ev', type: 'sdg13', name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%' },
+        { id: 'pm10', type: 'sdg13', name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度' },
+        { id: 'o3', type: 'sdg13', name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值' },
+        { id: 'agri', type: 'sdg15', name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積' },
+        { id: 'protect', type: 'sdg15', name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
+        { id: 'invasive', type: 'sdg15', name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' },
+        { id: 'avg_temp', type: 'climate', name: '綠島鄉年平均溫度', unit: '°C', data: [24.2, 23.9, 24.3, 24.2, 24.8, 24.3], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站年平均氣溫' },
+        { id: 'total_rain', type: 'climate', name: '綠島鄉年總降雨量', unit: 'mm', data: [1891.0, 2317.0, 2716.0, 2478.5, 1917.0, 3059.5], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站累積總降水量' },
+        { id: 'max_temp', type: 'climate', name: '綠島鄉年最高溫', unit: '°C', data: [34.4, 33.9, 34.4, 34.4, 34.2, 34.4], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站觀測之最高氣溫' }
+    ];
+
+    let nppChartInstance = null;
+    let modalChartInstance = null;
+
+    function init() {
+        const yearBox = document.getElementById('year-btn-container');
+        years.forEach((y, i) => {
+            const btn = document.createElement('button');
+            btn.className = `year-btn ${i === currentYearIdx ? 'active' : ''}`;
+            btn.innerText = y + " 年";
+            btn.onclick = () => switchYear(i);
+            yearBox.appendChild(btn);
+        });
+        renderPanels();
+        updateValues();
+    }
+
+    function renderPanels() {
+        const grid = document.getElementById('master-grid');
+        allIndicators.forEach(ind => {
+            const card = document.createElement('div');
+            card.className = `stat-card ${ind.type}`;
+            card.onclick = () => openChartModal(ind.id);
+            card.innerHTML = `
+                <h3>${ind.name}</h3>
+                <div class="value-container">
+                    <div class="stat-value" id="val-${ind.id}">--</div>
+                    <svg class="trend-arrow" id="arrow-${ind.id}" viewBox="0 0 100 50" preserveAspectRatio="none">
+                        <polygon id="poly-${ind.id}" points="50,5 95,45 5,45" />
+                    </svg>
+                </div>
+                <div class="stat-unit">${ind.unit}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function switchYear(i) {
+        currentYearIdx = i;
+        document.querySelectorAll('.year-btn').forEach((btn, idx) => btn.classList.toggle('active', idx === i));
+        updateValues();
+    }
+
+    function updateValues() {
+        allIndicators.forEach(ind => {
+            const valEl = document.getElementById(`val-${ind.id}`);
+            const arrowEl = document.getElementById(`arrow-${ind.id}`);
+            const polyEl = document.getElementById(`poly-${ind.id}`);
+            const currentVal = ind.data[currentYearIdx];
+            valEl.innerText = currentVal;
+
+            if (currentYearIdx > 0) {
+                const prevVal = ind.data[currentYearIdx - 1];
+                if (currentVal > prevVal) {
+                    valEl.style.color = "var(--up-color)";
+                    arrowEl.style.display = "block";
+                    polyEl.setAttribute("points", "50,5 95,45 5,45");
+                    arrowEl.style.fill = "var(--up-color)";
+                } else if (currentVal < prevVal) {
+                    valEl.style.color = "var(--down-color)";
+                    arrowEl.style.display = "block";
+                    polyEl.setAttribute("points", "5,5 95,5 50,45");
+                    arrowEl.style.fill = "var(--down-color)";
+                } else {
+                    valEl.style.color = "#222"; arrowEl.style.display = "none";
+                }
+            } else {
+                valEl.style.color = "#222"; arrowEl.style.display = "none";
+            }
+        });
+    }
+
+    function openChartModal(id) {
+        const ind = allIndicators.find(i => i.id === id);
+        if (!ind.data || ind.data.length <= 1) return;
+        document.getElementById('chartModalTitle').innerText = ind.name;
+        document.getElementById('modalDescription').innerHTML = `<strong>主管機關：</strong>${ind.agency || '無'}<br><strong>指標備註：</strong>${ind.note || '無'}`;
+        document.getElementById('chartModal').style.display = 'block';
+        const ctx = document.getElementById('modalCanvas').getContext('2d');
+        if (modalChartInstance) modalChartInstance.destroy();
+        modalChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                labels: years, 
+                datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3 }] 
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function closeChartModal() { document.getElementById('chartModal').style.display = 'none'; }
+
+    function formatInfoTime(timeStr) {
+        if (!timeStr) return "";
+        const match = timeStr.match(/(\d+)Y(\d+)M/);
+        if (match) return `${parseInt(match[1]) + 1911}年${match[2]}月`;
+        return timeStr;
+    }
+
+    const fieldMapping = {
+        "CODEBASE": "最小統計區代碼", "CODE1": "一級發布區代碼", "CODE2": "二級發布區代碼",
+        "TOWN_ID": "鄉鎮市區代碼", "TOWN": "綠島鄉", "COUNTY_ID": "縣市代碼", "COUNTY": "臺東縣",
+        "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數", "Shape_Area": "區域面積"
+    };
+
+    require(["esri/config", "esri/WebMap", "esri/views/MapView", "esri/Graphic"], function(esriConfig, WebMap, MapView, Graphic) {
+        esriConfig.portalUrl = "https://igistw.maps.arcgis.com";
+        const map = new WebMap({ portalItem: { id: "62fbdab523e945e3a141bf72a89c6d65" } });
+        const view = new MapView({ container: "viewDiv", map: map, popup: { autoOpenEnabled: false } });
+
+        view.when(() => { map.layers.forEach(l => { if (l.type === "feature") l.outFields = ["*"]; }); });
+
+        view.on("click", (event) => {
+            const content = document.getElementById('info-content');
+            const nppHint = document.getElementById('npp-chart-hint');
+            const nppCanvas = document.getElementById('nppChart');
+            view.graphics.removeAll();
+            view.hitTest(event).then((response) => {
+                const results = response.results.filter(r => r.graphic && r.graphic.layer);
+                if (results.length > 0) {
+                    const graphic = results[0].graphic;
+                    const attr = graphic.attributes;
+                    view.graphics.add(new Graphic({ geometry: graphic.geometry, symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: "red", width: 2 } } }));
+                    content.innerHTML = "";
+                    const datePrefix = formatInfoTime(attr["INFO_TIME"]);
+                    Object.keys(fieldMapping).forEach(key => {
+                        if (attr.hasOwnProperty(key)) {
+                            let label = fieldMapping[key];
+                            if (["戶數", "人口數", "男性人", "女性人"].includes(key)) label = `${datePrefix}${label}`;
+                            content.innerHTML += `<div class="property-row"><div class="property-label">${label}</div><div class="property-value">${attr[key] || "無資料"}</div></div>`;
+                        }
+                    });
+                    nppHint.style.display = 'none'; nppCanvas.style.display = 'block';
+                    updateNppChart(attr);
+                } else {
+                    content.innerHTML = "<p class='hint-text'>請在地圖上點擊圖徵以查看詳細資料</p>";
+                    nppHint.style.display = 'block'; nppCanvas.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function updateNppChart(attr) {
+        const nppData = [attr.CASA_NPP_2, attr.CASA_NPP_3, attr.CASA_NPP_4, attr.CASA_NPP_5, attr.CASA_NPP_6];
+        const ctx = document.getElementById('nppChart').getContext('2d');
+        if (nppChartInstance) nppChartInstance.destroy();
+        nppChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['2020', '2021', '2022', '2023', '2024'], datasets: [{ label: '平均 NPP 數值', data: nppData, borderColor: '#3f7e44', backgroundColor: '#3f7e4422', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+    init();
+</script>
+</body>
+</html>
