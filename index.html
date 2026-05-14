@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>臺東縣 SDG 13 & 15 滿版互動儀表板</title>
+    <title>臺東縣及綠島鄉SDG 13&15儀表板</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
     <script src="https://js.arcgis.com/4.28/"></script>
@@ -177,9 +177,9 @@
         { id: 'agri', type: 'sdg15', name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積' },
         { id: 'protect', type: 'sdg15', name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
         { id: 'invasive', type: 'sdg15', name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' },
-        { id: 'avg_temp', type: 'climate', name: '綠島鄉年平均溫度', unit: '°C', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' },
-        { id: 'total_rain', type: 'climate', name: '綠島鄉年總降雨量', unit: 'mm', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' },
-        { id: 'max_temp', type: 'climate', name: '綠島鄉年平均最高溫', unit: '°C', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' }
+        { id: 'avg_temp', type: 'climate', name: '綠島鄉年平均溫度', unit: '°C', data: [24.2, 23.9, 24.3, 24.2, 24.8, 24.3], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站年平均氣溫' },
+        { id: 'total_rain', type: 'climate', name: '綠島鄉年總降雨量', unit: 'mm', data: [1891.0, 2317.0, 2716.0, 2478.5, 1917.0, 3059.5], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站累積總降水量' },
+        { id: 'max_temp', type: 'climate', name: '綠島鄉年最高溫', unit: '°C', data: [34.4, 33.9, 34.4, 34.4, 34.2, 34.4], color: '#2c3e50', agency: '交通部中央氣象署', note: '各年度綠島觀測站觀測之最高氣溫' }
     ];
 
     let nppChartInstance = null;
@@ -229,10 +229,10 @@
             const valEl = document.getElementById(`val-${ind.id}`);
             const arrowEl = document.getElementById(`arrow-${ind.id}`);
             const polyEl = document.getElementById(`poly-${ind.id}`);
-            const currentVal = (ind.yearly !== false) ? ind.data[currentYearIdx] : ind.val;
+            const currentVal = ind.data[currentYearIdx];
             valEl.innerText = currentVal;
 
-            if (ind.yearly !== false && currentYearIdx > 0) {
+            if (currentYearIdx > 0) {
                 const prevVal = ind.data[currentYearIdx - 1];
                 if (currentVal > prevVal) {
                     valEl.style.color = "var(--up-color)";
