@@ -11,10 +11,12 @@
         :root { 
             --sdg13-color: #3f7e44; 
             --sdg15-color: #56c02b; 
+            --climate-color: #2c3e50;
             --bg-color: #ffffff; 
-            --card-title-size: 1rem; 
-            --section-header-size: 1.1rem;
+            --card-title-size: 0.9rem; 
             --axis-font-size: 12; 
+            --up-color: #28a745;
+            --down-color: #dc3545;
         }
         
         html, body { 
@@ -26,97 +28,116 @@
         }
 
         .side-panel { 
-            width: 60vw; background: white; display: flex; 
-            flex-direction: column; border-right: 1px solid #ddd; 
-            flex-shrink: 0; height: 100vh; margin: 0; padding: 0;
+            width: 60vw; background: #fff; display: flex; 
+            border-right: 1px solid #ddd; flex-shrink: 0; height: 100vh; 
         }
 
-        .logo-box { 
-            width: 100%; padding: 0; margin: 0; 
-            border-bottom: 2px solid #eee; flex-shrink: 0; 
-            cursor: zoom-in;
+        /* 左側年份與 Logo 欄位調整 */
+        .year-sidebar {
+            width: 220px; background: #fff; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #eee;
         }
-        .sidebar-logo { width: 100%; height: auto; display: block; }
+        
+        /* Logo 圖片大小統一設定 */
+        .sidebar-logo-container { width: 100%; display: flex; flex-direction: column; padding: 0; }
+        .sidebar-logo-img { width: 100%; height: auto; cursor: pointer; display: block; transition: opacity 0.3s; }
+        .sidebar-logo-img:hover { opacity: 0.8; }
+        
+        /* 標題與綠色線條統一設定 */
+        .sidebar-text { 
+            padding: 15px;
+            color: #333; font-size: 1.1rem; text-align: center; font-weight: bold; 
+            border-bottom: 2px solid var(--sdg13-color);
+            margin: 0 15px 20px 15px;
+        }
+        
+        /* 年份按鈕字體、字形與外觀統一設定 */
+        #year-btn-container { padding: 0 15px; display: flex; flex-direction: column; }
+        .year-btn {
+            width: 100%; 
+            padding: 12px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            text-align: center; 
+            font-size: 1rem; 
+            margin-bottom: 8px; 
+            border-radius: 6px; 
+            background: #f8f9fa; 
+            color: #555; 
+            border: 1px solid #eee;
+            font-family: "Microsoft JhengHei", sans-serif;
+            box-sizing: border-box;
+        }
+        .year-btn:hover { background: #e9ecef; }
+        .year-btn.active { 
+            background: var(--sdg13-color); 
+            color: white; 
+            font-weight: bold; 
+            border-color: var(--sdg13-color); 
+        }
 
-        .sidebar-content { 
-            flex: 1; display: flex; flex-direction: column; 
-            padding: 0; margin: 0; min-height: 0;
-            overflow: hidden;
-        }
-
-        .sdg-section-header { 
-            height: 40px; line-height: 40px; padding: 0 15px; 
-            font-size: var(--section-header-size); 
-            color: white; font-weight: bold; flex-shrink: 0; 
-            margin-top: 0.5rem;
-        }
-        #header-15 { margin-top: 0; }
+        .main-indicators { flex: 1; display: flex; flex-direction: column; height: 100vh; }
         
         .indicator-grid { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            gap: 0; margin: 0; padding: 0;
-            height: calc((100% - 80px - 0.5rem) / 2); 
-            flex-shrink: 0;
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(3, 1fr); /* 從 4 調整為 3，讓剩餘 9 個指標垂直填滿 */
+            gap: 2px; padding: 2px;
+            height: 100%; width: 100%;
+            box-sizing: border-box; background: #eee; 
         }
 
-        .card { 
-            background: #fff; padding: 10px; display: flex; 
-            flex-direction: column; position: relative; 
-            box-sizing: border-box;
-            border: 0.5px solid #eee; 
-            min-height: 0; height: 100%;
+        .stat-card {
+            background: #fff; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center;
+            cursor: pointer; position: relative; transition: background 0.2s;
+            overflow: hidden; border-left: 6px solid #ccc; 
         }
-        .card h3 { 
-            margin: 0 0 5px 0; font-size: var(--card-title-size); 
-            color: #333; padding-right: 65px; line-height: 1.2; height: 2.4em; 
-            overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical; 
-        }
-        .canvas-container { flex: 1; position: relative; min-height: 0; }
+        .stat-card.sdg13 { border-left-color: var(--sdg13-color); }
+        .stat-card.sdg15 { border-left-color: var(--sdg15-color); }
+        .stat-card.climate { border-left-color: var(--climate-color); }
+
+        .stat-card h3 { margin: 0; font-size: var(--card-title-size); color: #666; text-align: center; width: 90%; }
         
-        .info-btn { 
-            position: absolute; top: 10px; right: 10px; 
-            background: #f0f0f0; border: none; padding: 3px 8px; 
-            border-radius: 4px; cursor: pointer; font-size: 0.75rem; 
-            z-index: 10;
-        }
+        .value-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 5px 0; }
+        .stat-value { font-size: 2.2rem; font-weight: bold; color: #222; }
+        .stat-unit { font-size: 0.8rem; color: #999; }
+
+        .trend-arrow { width: 1cm; height: 0.5cm; display: none; }
 
         .map-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #fff; }
         #viewDiv { flex: 2; width: 100%; } 
-        
-        #fixed-feature-info { 
-            flex: 1; display: flex; flex-direction: column; 
-            border-top: 2px solid #ccc; background: #fff; overflow: hidden; 
-        }
-        .info-header { background: #3f7e44; color: white; padding: 12px; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
+        #fixed-feature-info { flex: 1; display: flex; flex-direction: column; border-top: 2px solid #ccc; background: #fff; overflow: hidden; }
+        .info-header { background: #3f7e44; color: white; padding: 12px; text-align: center; flex-shrink: 0; }
         .info-flex-container { display: flex; flex: 1; min-height: 0; }
         .info-body-text { flex: 1; padding: 15px; overflow-y: auto; border-right: 1px solid #eee; }
         .info-body-chart { flex: 1; padding: 10px; background: #fafafa; display: flex; flex-direction: column; }
 
-        .property-row { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .property-label { font-weight: bold; color: #555; font-size: 0.85rem; }
-        .property-value { color: #000; word-break: break-all; font-size: 0.95rem; }
-        .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 50px; }
+        .property-row { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+        .property-label { font-weight: bold; color: #555; font-size: 0.8rem; }
+        .property-value { color: #000; word-break: break-all; font-size: 0.9rem; }
+        .hint-text { color: #888; font-style: italic; text-align: center; margin-top: 30px; }
 
         .modal { display: none; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 12px; width: 450px; }
-        .close { float: right; font-size: 30px; cursor: pointer; color: #999; line-height: 1; }
-        #imageModal .modal-content { background: transparent; width: auto; height: 90vh; display: flex; justify-content: center; align-items: center; }
-        #expandedImg { max-width: 90%; max-height: 90%; border-radius: 8px; }
+        .modal-content { background: white; margin: 5vh auto; padding: 25px; border-radius: 12px; width: 800px; max-width: 90%; position: relative; }
+        .close { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #999; }
+        #chartModal .canvas-container { height: 420px; width: 100%; margin-top: 10px; }
+        #modalDescription { font-size: 0.85rem; color: #444; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
 <div class="side-panel">
-    <div class="logo-box" onclick="openImageModal('SDG13&15logo.png')">
-        <img src="SDG13&15logo.png" alt="SDG Logo" class="sidebar-logo">
+    <div class="year-sidebar">
+        <div class="sidebar-logo-container">
+            <a href="https://globalgoals.tw/13-climate-action" target="_blank"><img src="SDG13logo.png" alt="SDG13" class="sidebar-logo-img"></a>
+            <a href="https://globalgoals.tw/15-life-on-land" target="_blank"><img src="SDG15logo.png" alt="SDG15" class="sidebar-logo-img"></a>
+        </div>
+        <div class="sidebar-text">請選擇年份</div>
+        <div id="year-btn-container"></div>
     </div>
-    <div class="sidebar-content">
-        <div class="sdg-section-header" style="background: var(--sdg13-color);">臺東縣 SDG 13 氣候行動</div>
-        <div class="indicator-grid" id="grid-13"></div>
 
-        <div class="sdg-section-header" id="header-15" style="background: var(--sdg15-color);">臺東縣 SDG 15 陸地生態</div>
-        <div class="indicator-grid" id="grid-15"></div>
+    <div class="main-indicators">
+        <div class="indicator-grid" id="master-grid"></div>
     </div>
 </div>
 
@@ -136,102 +157,121 @@
     </div>
 </div>
 
-<div id="infoModal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h2 id="modalTitle" style="margin-top:0;"></h2><p><strong>主管機關：</strong><br><span id="modalAgency"></span></p><p><strong>指標備註：</strong><br><span id="modalNote"></span></p></div></div>
-<div id="imageModal" class="modal" onclick="this.style.display='none'"><div class="modal-content"><img id="expandedImg"></div></div>
+<div id="chartModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeChartModal()">&times;</span>
+        <h2 id="chartModalTitle" style="margin-top:0; font-size: 1.2rem; color: #333;"></h2>
+        <div id="modalDescription"></div>
+        <div class="canvas-container"><canvas id="modalCanvas"></canvas></div>
+    </div>
+</div>
 
 <script>
     const years = ['109', '110', '111', '112', '113', '114'];
-    const indicators = [
-        { id: 'ev', sdg: 13, name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%，可洽https://stat.thb.gov.tw/hb01/webMain.aspx?sys=100&funid=11100公路局統計網' },
-        { id: 'pm10', sdg: 13, name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度（第98% 高值），指標分類依環境部公告空氣品質指標作為依據。' },
-        { id: 'o3', sdg: 13, name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值，指標分類依環境部公告空氣品質指標作為依據。' },
-        { id: 'agri', sdg: 15, name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積（有機種植面積為經有機驗證之農糧作物種植面積；友善耕作面積為耕作推廣團體審認之友善耕作面積）' },
-        { id: 'protect', sdg: 15, name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
-        { id: 'invasive', sdg: 15, name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' }
+    let currentYearIdx = 5;
+
+    const allIndicators = [
+        { id: 'ev', type: 'sdg13', name: '各年度電動汽車佔比', unit: '%', data: [0.02, 0.03, 0.08, 2.43, 2.64, 2.45], color: '#3498db', agency: '臺東縣政府交通及養護工程處', note: '電動汽車數量(純電)／汽車總數量x100%' },
+        { id: 'pm10', type: 'sdg13', name: 'PM10 日平均濃度', unit: 'μg/m³', data: [35, 42, 33, 40, 45, 58], color: '#e67e22', agency: '臺東縣環境保護局', note: '各年懸浮微粒（PM10）日平均濃度' },
+        { id: 'o3', type: 'sdg13', name: '每年臭氧 (O3) 小時平均值', unit: 'ppb', data: [65, 60, 61, 64, 61, 69], color: '#9b59b6', agency: '臺東縣環境保護局', note: '各年臭氧 (O3) 小時平均值' },
+        { id: 'agri', type: 'sdg15', name: '有機及友善農業生產面積', unit: '公頃', data: [1484.14, 1277.22, 2284.81, 2488.43, 2439.77, 2680.19], color: '#27ae60', agency: '臺東縣政府農業處', note: '臺東縣通過有機驗證及友善審認之農地面積' },
+        { id: 'protect', type: 'sdg15', name: '各年度編定保護區面積', unit: '公頃', data: [292, 292, 336, 335.92, 335.92, 335.92], color: '#16a085', agency: '臺東縣政府農業處', note: '各年編定為濕地、國家公園地區、自然保護區等累計面積' },
+        { id: 'invasive', type: 'sdg15', name: '特定外來植物覆蓋面積', unit: '公頃', data: [143.25, 133.4, 92.1, 74.0, 80.0, 45.4], color: '#c0392b', agency: '臺東縣政府農業處', note: '各年特定外來植物覆蓋面積' },
+        { id: 'avg_temp', type: 'climate', name: '綠島鄉年平均溫度', unit: '°C', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' },
+        { id: 'total_rain', type: 'climate', name: '綠島鄉年總降雨量', unit: 'mm', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' },
+        { id: 'max_temp', type: 'climate', name: '綠島鄉年平均最高溫', unit: '°C', data: [0,0,0,0,0,0], yearly: true, color: '#2c3e50' }
     ];
 
     let nppChartInstance = null;
+    let modalChartInstance = null;
 
     function init() {
-        indicators.forEach(ind => {
-            const grid = document.getElementById(`grid-${ind.sdg}`);
-            grid.innerHTML += `<div class="card"><h3>${ind.name}</h3><button class="info-btn" onclick="showInfo('${ind.name}', '${ind.agency}', '${ind.note}')">詳細資訊</button><div class="canvas-container"><canvas id="canvas_${ind.id}"></canvas></div></div>`;
+        const yearBox = document.getElementById('year-btn-container');
+        years.forEach((y, i) => {
+            const btn = document.createElement('button');
+            btn.className = `year-btn ${i === currentYearIdx ? 'active' : ''}`;
+            btn.innerText = y + " 年";
+            btn.onclick = () => switchYear(i);
+            yearBox.appendChild(btn);
         });
-        renderCharts();
+        renderPanels();
+        updateValues();
     }
 
-    function renderCharts() {
-        const axisSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
-        indicators.forEach(ind => {
-            const ctx = document.getElementById(`canvas_${ind.id}`).getContext('2d');
-            
-            // 動態顏色判斷邏輯
-            let pointColors = [];
+    function renderPanels() {
+        const grid = document.getElementById('master-grid');
+        allIndicators.forEach(ind => {
+            const card = document.createElement('div');
+            card.className = `stat-card ${ind.type}`;
+            card.onclick = () => openChartModal(ind.id);
+            card.innerHTML = `
+                <h3>${ind.name}</h3>
+                <div class="value-container">
+                    <div class="stat-value" id="val-${ind.id}">--</div>
+                    <svg class="trend-arrow" id="arrow-${ind.id}" viewBox="0 0 100 50" preserveAspectRatio="none">
+                        <polygon id="poly-${ind.id}" points="50,5 95,45 5,45" />
+                    </svg>
+                </div>
+                <div class="stat-unit">${ind.unit}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
 
-            if (ind.id === 'pm10') {
-                pointColors = ind.data.map(v => v >= 50 ? '#f1c40f' : '#2ecc71');
-            } else if (ind.id === 'o3') {
-                // 單位轉換門檻：0.054ppm = 54ppb. > 54 為黃色，其餘綠色
-                pointColors = ind.data.map(v => v > 54 ? '#f1c40f' : '#2ecc71');
-            } else {
-                pointColors = ind.color;
-            }
+    function switchYear(i) {
+        currentYearIdx = i;
+        document.querySelectorAll('.year-btn').forEach((btn, idx) => btn.classList.toggle('active', idx === i));
+        updateValues();
+    }
 
-            // Y 軸特定設定
-            let yScaleConfig = { 
-                ticks: { font: { size: axisSize } }
-            };
+    function updateValues() {
+        allIndicators.forEach(ind => {
+            const valEl = document.getElementById(`val-${ind.id}`);
+            const arrowEl = document.getElementById(`arrow-${ind.id}`);
+            const polyEl = document.getElementById(`poly-${ind.id}`);
+            const currentVal = (ind.yearly !== false) ? ind.data[currentYearIdx] : ind.val;
+            valEl.innerText = currentVal;
 
-            // 如果是 O3，縮小範圍至 50~75 以凸顯波動，並在 55 劃綠色基準線
-            if (ind.id === 'o3') {
-                yScaleConfig.min = 50; 
-                yScaleConfig.max = 75;
-                yScaleConfig.grid = {
-                    color: context => context.tick.value === 55 ? 'rgba(46, 204, 113, 1)' : 'rgba(0,0,0,0.1)',
-                    lineWidth: context => context.tick.value === 55 ? 2 : 1
-                };
-            } else if (ind.id === 'pm10') {
-                yScaleConfig.grid = {
-                    color: context => context.tick.value === 50 ? 'rgba(241, 196, 15, 0.8)' : 'rgba(0,0,0,0.1)',
-                    lineWidth: context => context.tick.value === 50 ? 2 : 1
-                };
-            }
-
-            new Chart(ctx, {
-                type: 'line',
-                data: { 
-                    labels: years, 
-                    datasets: [{ 
-                        label: ind.unit, 
-                        data: ind.data, 
-                        borderColor: ind.color, 
-                        backgroundColor: ind.color + '15', 
-                        pointBackgroundColor: pointColors,
-                        pointBorderColor: '#fff',
-                        pointRadius: 5,
-                        fill: true, 
-                        tension: 0.3,
-                        segment: {
-                            borderColor: ctx => {
-                                if (ind.id === 'pm10') return ctx.p1.parsed.y >= 50 ? '#f1c40f' : '#2ecc71';
-                                if (ind.id === 'o3') return ctx.p1.parsed.y > 54 ? '#f1c40f' : '#2ecc71';
-                                return ind.color;
-                            }
-                        }
-                    }] 
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { 
-                        y: yScaleConfig, 
-                        x: { ticks: { font: { size: axisSize } } } 
-                    } 
+            if (ind.yearly !== false && currentYearIdx > 0) {
+                const prevVal = ind.data[currentYearIdx - 1];
+                if (currentVal > prevVal) {
+                    valEl.style.color = "var(--up-color)";
+                    arrowEl.style.display = "block";
+                    polyEl.setAttribute("points", "50,5 95,45 5,45");
+                    arrowEl.style.fill = "var(--up-color)";
+                } else if (currentVal < prevVal) {
+                    valEl.style.color = "var(--down-color)";
+                    arrowEl.style.display = "block";
+                    polyEl.setAttribute("points", "5,5 95,5 50,45");
+                    arrowEl.style.fill = "var(--down-color)";
+                } else {
+                    valEl.style.color = "#222"; arrowEl.style.display = "none";
                 }
-            });
+            } else {
+                valEl.style.color = "#222"; arrowEl.style.display = "none";
+            }
         });
     }
+
+    function openChartModal(id) {
+        const ind = allIndicators.find(i => i.id === id);
+        if (!ind.data || ind.data.length <= 1) return;
+        document.getElementById('chartModalTitle').innerText = ind.name;
+        document.getElementById('modalDescription').innerHTML = `<strong>主管機關：</strong>${ind.agency || '無'}<br><strong>指標備註：</strong>${ind.note || '無'}`;
+        document.getElementById('chartModal').style.display = 'block';
+        const ctx = document.getElementById('modalCanvas').getContext('2d');
+        if (modalChartInstance) modalChartInstance.destroy();
+        modalChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                labels: years, 
+                datasets: [{ label: ind.unit, data: ind.data, borderColor: ind.color, backgroundColor: ind.color + '15', fill: true, tension: 0.3 }] 
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function closeChartModal() { document.getElementById('chartModal').style.display = 'none'; }
 
     function formatInfoTime(timeStr) {
         if (!timeStr) return "";
@@ -243,8 +283,7 @@
     const fieldMapping = {
         "CODEBASE": "最小統計區代碼", "CODE1": "一級發布區代碼", "CODE2": "二級發布區代碼",
         "TOWN_ID": "鄉鎮市區代碼", "TOWN": "綠島鄉", "COUNTY_ID": "縣市代碼", "COUNTY": "臺東縣",
-        "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數",
-        "Shape_Area": "區域面積"
+        "戶數": "戶數", "人口數": "人口數", "男性人": "男性人口數", "女性人": "女性人口數", "Shape_Area": "區域面積"
     };
 
     require(["esri/config", "esri/WebMap", "esri/views/MapView", "esri/Graphic"], function(esriConfig, WebMap, MapView, Graphic) {
@@ -252,9 +291,7 @@
         const map = new WebMap({ portalItem: { id: "62fbdab523e945e3a141bf72a89c6d65" } });
         const view = new MapView({ container: "viewDiv", map: map, popup: { autoOpenEnabled: false } });
 
-        view.when(() => {
-            map.layers.forEach(l => { if (l.type === "feature") l.outFields = ["*"]; });
-        });
+        view.when(() => { map.layers.forEach(l => { if (l.type === "feature") l.outFields = ["*"]; }); });
 
         view.on("click", (event) => {
             const content = document.getElementById('info-content');
@@ -276,13 +313,11 @@
                             content.innerHTML += `<div class="property-row"><div class="property-label">${label}</div><div class="property-value">${attr[key] || "無資料"}</div></div>`;
                         }
                     });
-                    nppHint.style.display = 'none';
-                    nppCanvas.style.display = 'block';
+                    nppHint.style.display = 'none'; nppCanvas.style.display = 'block';
                     updateNppChart(attr);
                 } else {
                     content.innerHTML = "<p class='hint-text'>請在地圖上點擊圖徵以查看詳細資料</p>";
-                    nppHint.style.display = 'block';
-                    nppCanvas.style.display = 'none';
+                    nppHint.style.display = 'block'; nppCanvas.style.display = 'none';
                 }
             });
         });
@@ -291,25 +326,13 @@
     function updateNppChart(attr) {
         const nppData = [attr.CASA_NPP_2, attr.CASA_NPP_3, attr.CASA_NPP_4, attr.CASA_NPP_5, attr.CASA_NPP_6];
         const ctx = document.getElementById('nppChart').getContext('2d');
-        const axisSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--axis-font-size')) || 12;
         if (nppChartInstance) nppChartInstance.destroy();
         nppChartInstance = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: ['2020', '2021', '2022', '2023', '2024'],
-                datasets: [{ label: '平均 NPP 數值', data: nppData, borderColor: '#3f7e44', backgroundColor: '#3f7e4422', fill: true, tension: 0.3, pointRadius: 5 }]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: true, position: 'top' }, title: { display: true, text: 'NPP 年度趨勢', font: { size: 14 } } },
-                scales: { y: { ticks: { font: { size: axisSize } } }, x: { ticks: { font: { size: axisSize } } } }
-            }
+            data: { labels: ['2020', '2021', '2022', '2023', '2024'], datasets: [{ label: '平均 NPP 數值', data: nppData, borderColor: '#3f7e44', backgroundColor: '#3f7e4422', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
-
-    function openImageModal(src) { document.getElementById('expandedImg').src = src; document.getElementById('imageModal').style.display = 'block'; }
-    function showInfo(t, a, n) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalAgency').innerText = a; document.getElementById('modalNote').innerText = n; document.getElementById('infoModal').style.display = 'block'; }
-    function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
     init();
 </script>
 </body>
